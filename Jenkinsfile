@@ -39,24 +39,22 @@ pipeline {
     }
 
     stage('Generate stable builds') {
-  steps {
-    //  ensure pip exists (one-off);  install PyYAML if it is missing
-    sh '''
-      if ! command -v pip3 >/dev/null ; then
-        apt-get update -qq && apt-get install -y --no-install-recommends python3-pip
-      fi
-      python3 - <<'PY'
-import importlib, subprocess, sys, os
-try:
-    importlib.import_module("yaml")
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "PyYAML"])
-PY
-      python3 ci/gen_stable_builds.py
-    '''
-    archiveArtifacts artifacts: 'stable-builds.yml', fingerprint: true
-  }
-}
+      steps {
+        sh '''
+          if [ ! -d .venv ]; then
+            python3 -m venv .venv
+            . .venv/bin/activate
+            pip install --quiet --upgrade pip           # latest pip inside venv
+            pip install --quiet PyYAML                  # yaml module we need
+          else
+            . .venv/bin/activate                        # reuse existing venv
+          fi
+    
+          python ci/gen_stable_builds.py
+        '''
+        archiveArtifacts artifacts: 'stable-builds.yml', fingerprint: true
+      }
+    }
 
     stage('Deploy changed') {
       steps { sh "ci/deploy_changed.sh ${env.BED} ${env.SVCS}" }
