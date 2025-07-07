@@ -6,7 +6,7 @@ pipeline {
   }
 
     environment {
-      KCFG_ID = 'vc-demo-kubeconfig'              
+      KCFG_ID = 'vc-demo.kubeconfig'              
       BED_CTX = 'kubernetes-admin@kubernetes'     
   }
 
