@@ -4,8 +4,10 @@ pipeline {
     booleanParam(name:'RUN_AGAIN', defaultValue:false,
                  description:'Re-run tests without a new approval')
   }
-  environment {
-    BED = 'vc-demo'              // name of the vcluster context in kubeconfig
+
+    environment {
+      KCFG_ID = 'vc-demo-kubeconfig'              
+      BED_CTX = 'kubernetes-admin@kubernetes'     
   }
 
   stages {
@@ -48,13 +50,29 @@ pipeline {
       }
     }
 
-    stage('Deploy changed') {
-      steps { sh "ci/deploy_changed.sh ${env.BED} ${env.SVCS}" }
+stage('Deploy changed') {
+    steps {
+        withCredentials([file(credentialsId: env.KCFG_ID,
+                             variable: 'VC_KUBECONFIG')]) {
+            sh '''
+              export KUBECONFIG="$VC_KUBECONFIG"
+              ci/deploy_changed.sh "$BED_CTX" "$SVCS"
+            '''
+        }
     }
+}
 
-    stage('Run tests') {
-      steps { sh "ci/run_tests.sh ${env.SVCS}" }
+stage('Run tests') {
+    steps {
+        withCredentials([file(credentialsId: env.KCFG_ID,
+                             variable: 'VC_KUBECONFIG')]) {
+            sh '''
+              export KUBECONFIG="$VC_KUBECONFIG"
+              ci/run_tests.sh "$SVCS"
+            '''
+        }
     }
+}
   }
 
   post {
