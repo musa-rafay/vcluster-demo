@@ -41,16 +41,8 @@ pipeline {
     stage('Generate stable builds') {
       steps {
         sh '''
-          if [ ! -d .venv ]; then
-            python3 -m venv .venv
-            . .venv/bin/activate
-            pip install --quiet --upgrade pip           # latest pip inside venv
-            pip install --quiet PyYAML                  # yaml module we need
-          else
-            . .venv/bin/activate                        # reuse existing venv
-          fi
-    
-          python ci/gen_stable_builds.py
+          python3 -m pip install --user --quiet --break-system-packages PyYAML
+          python3 ci/gen_stable_builds.py
         '''
         archiveArtifacts artifacts: 'stable-builds.yml', fingerprint: true
       }
